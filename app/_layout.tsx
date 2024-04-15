@@ -1,20 +1,38 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { useFonts } from "expo-font";
+import { Stack, useRouter } from "expo-router";
+import { TouchableOpacity } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import * as SecureStore from "expo-secure-store";
+import * as SplashScreen from "expo-splash-screen";
 
-import { useColorScheme } from '@/components/useColorScheme';
+const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const tokenCache = {
+  async getToken(key: string) {
+    try {
+      return SecureStore.getItemAsync(key);
+    } catch (err) {
+      return null;
+    }
+  },
+  async saveToken(key: string, value: string) {
+    try {
+      return SecureStore.setItemAsync(key, value);
+    } catch (err) {
+      return;
+    }
+  },
+};
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
-} from 'expo-router';
+} from "expo-router";
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: "(tabs)",
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -22,8 +40,9 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
+    sf: require("../assets/fonts/SF-Pro-Display-Regular.otf"),
+    "sf-sb": require("../assets/fonts/SF-Pro-Display-Semibold.otf"),
+    "sf-b": require("../assets/fonts/SF-Pro-Display-Bold.otf"),
   });
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
@@ -41,18 +60,64 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
+      <RootLayoutNav />
+    </ClerkProvider>
+  );
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
+  const [loaded, setLoaded] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const onboardingStatus = await SecureStore.getItemAsync("onboardingComplete");
+        if (onboardingStatus === "true") {
+          setOnboardingComplete(true);
+        }
+      } catch (error) {
+        console.error("Error retrieving onboarding status:", error);
+      } finally {
+        setLoaded(true);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, []);
+
+  useEffect(() => {
+    if (loaded && isLoaded && !isSignedIn && !onboardingComplete) {
+      router.replace("/(auth)/onboarding");
+    } else if (loaded && isLoaded && isSignedIn) {
+      router.replace("/(tabs)/explore");
+    } else if (loaded && isLoaded && onboardingComplete) {
+      router.replace("/(auth)/register");
+    }
+  }, [loaded, isLoaded]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="listing/[id]" options={{ headerTitle: "" }} />
+      <Stack.Screen
+        name="(modals)/rental"
+        options={{
+          presentation: "transparentModal",
+          animation: "fade",
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()}>
+              <Feather name="chevron-left" size={24} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+    </Stack>
   );
 }
