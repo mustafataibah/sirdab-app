@@ -1,100 +1,106 @@
-import React, { useState } from "react";
-import { TextInput, View, TouchableOpacity, Text, Button } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  TextInput,
+  View,
+  TouchableOpacity,
+  Text,
+  Platform,
+  KeyboardAvoidingView,
+  ActivityIndicator,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Alert,
+} from "react-native";
 import { useRouter } from "expo-router";
-import { useSignIn } from "@clerk/clerk-react";
-// import { useWarmUpBrowser } from "@/hooks/useWarmUpBrowser";
-// import { useOAuth } from "@clerk/clerk-expo";
-
-// enum Strategy {
-//   Google = "oauth_google",
-//   Apple = "oauth_apple",
-// }
+import { useSignIn, useUser } from "@clerk/clerk-react";
 
 const Login = () => {
   const { isLoaded, signIn, setActive } = useSignIn();
-  const [email, setEmail] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const { user, isSignedIn } = useUser();
+  const [loading, setLoading] = useState(false);
 
-  // useWarmUpBrowser();
-
-  // const { startOAuthFlow: googleAuth } = useOAuth({ strategy: "oauth_google" });
-  // const { startOAuthFlow: appleAuth } = useOAuth({ strategy: "oauth_apple" });
-
-  // const onSelectAuth = async (strategy: Strategy) => {
-  //   const selectedAuth = {
-  //     [Strategy.Google]: googleAuth,
-  //     [Strategy.Apple]: appleAuth,
-  //   }[strategy];
-
-  //   try {
-  //     const { createdSessionId, setActive } = await selectedAuth();
-
-  //     if (createdSessionId) {
-  //       setActive!({ session: createdSessionId });
-  //       router.navigate("(tabs)/explore");
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
+  useEffect(() => {
+    if (isSignedIn) {
+      if (user?.publicMetadata?.isManager) {
+        router.navigate("/(managerTabs)/users");
+      } else {
+        router.navigate("/(tabs)/explore");
+      }
+    }
+  }, [isSignedIn]);
 
   const handleSignIn = async () => {
+    setLoading(true);
     if (!isLoaded) return;
 
     try {
       const completeSignIn = await signIn.create({
-        identifier: email,
+        identifier: emailAddress,
         password,
       });
 
-      if (completeSignIn.status !== "complete") {
-      }
-
       if (completeSignIn.status === "complete") {
         await setActive({ session: completeSignIn.createdSessionId });
-        router.navigate("/(tabs)/explore");
       }
-    } catch (error) {
-      console.error(JSON.stringify(error, null, 2));
+    } catch (error: any) {
+      Alert.alert("Failed to sign in");
     }
+    setLoading(false);
+  };
+
+  const handleScreenTap = () => {
+    Keyboard.dismiss();
   };
 
   return (
-    <View className="flex-1 bg-white p-[26px] justify-center items-center">
-      <View className="flex flex-col gap-[8px] w-full">
-        <TextInput
-          autoCapitalize="none"
-          onChangeText={setEmail}
-          value={email}
-          placeholder="Email"
-          className="h-[44px] border border-neutral-300 rounded-lg bg-white w-full p-3"
-        />
-        <TextInput
-          autoCapitalize="none"
-          onChangeText={setPassword}
-          value={password}
-          placeholder="Password"
-          className="h-[44px] border border-neutral-300 rounded-lg bg-white w-full p-3"
-        />
-        <Button title="Sign In" onPress={handleSignIn} />
+    <TouchableWithoutFeedback onPress={handleScreenTap}>
+      <View className="flex-1 flex flex-col">
+        <View className="bg-blue-500 absolute h-[200px] w-full">
+          <View className="flex flex-row items-end pb-[30px] px-5 gap-10 h-full">
+            <TouchableOpacity>
+              <Text className="text-white text-3xl font-semibold">Log in</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.navigate("(auth)/register")}>
+              <Text className="text-white text-xl font-semibold">Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="mt-[150px] bg-white h-full rounded-l-[50px] flex-1 flex items-center justify-center">
+          <View className="flex flex-col gap-[16px] p-5 w-full">
+            <TextInput
+              autoCapitalize="none"
+              onChangeText={setEmailAddress}
+              value={emailAddress}
+              placeholder="Email"
+              className="h-[44px] border border-neutral-300 rounded-lg bg-white p-3 shadow-sm focus:border-black"
+            />
+            <TextInput
+              autoCapitalize="none"
+              onChangeText={setPassword}
+              value={password}
+              placeholder="Password"
+              secureTextEntry={true}
+              className="h-[44px] border border-neutral-300 rounded-lg bg-white p-3 mb-[25px] shadow-sm focus:border-black"
+            />
+
+            <TouchableOpacity
+              className="bg-blue-500 rounded-full py-4 justify-center items-center shadow-lg"
+              onPress={handleSignIn}>
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white font-bold text-[16px]">Log In</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </View>
-      {/* <View className="flex flex-col gap-[8px] w-full my-[20px]">
-        <TouchableOpacity
-          onPress={() => onSelectAuth(Strategy.Google)}
-          className="justify-center items-center h-[44px] bg-blue-500 rounded-lg">
-          <Text className="text-white font-bold">Sign in with Google</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => onSelectAuth(Strategy.Apple)}
-          className="justify-center items-center h-[44px] bg-black rounded-lg">
-          <Text className="text-white font-bold">Sign in with Apple</Text>
-        </TouchableOpacity>
-      </View> */}
-      <TouchableOpacity onPress={() => router.navigate("(auth)/register")}>
-        <Text className="text-blue-500 font-bold">Sign Up</Text>
-      </TouchableOpacity>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 

@@ -3,9 +3,10 @@ import { useFonts } from "expo-font";
 import { Stack, useRouter } from "expo-router";
 import { TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { ClerkProvider, useUser } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
 import * as SplashScreen from "expo-splash-screen";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 const tokenCache = {
@@ -62,23 +63,26 @@ export default function RootLayout() {
 
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
-      <RootLayoutNav />
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <RootLayoutNav />
+      </GestureHandlerRootView>
     </ClerkProvider>
   );
 }
 
 function RootLayoutNav() {
   const router = useRouter();
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, user, isSignedIn } = useUser();
   const [loaded, setLoaded] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
+  // Primative onboarding check
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       try {
         const onboardingStatus = await SecureStore.getItemAsync("onboardingComplete");
         if (onboardingStatus === "true") {
-          setOnboardingComplete(true);
+          setOnboardingComplete(false);
         }
       } catch (error) {
         console.error("Error retrieving onboarding status:", error);
@@ -90,11 +94,16 @@ function RootLayoutNav() {
     checkOnboardingStatus();
   }, []);
 
+  // TODO FIX THIS
   useEffect(() => {
     if (loaded && isLoaded && !isSignedIn && !onboardingComplete) {
       router.replace("/(auth)/onboarding");
     } else if (loaded && isLoaded && isSignedIn) {
-      router.replace("/(tabs)/explore");
+      if (user?.publicMetadata?.isManager) {
+        router.replace("/(managerTabs)/users");
+      } else {
+        router.replace("/(tabs)/explore");
+      }
     } else if (loaded && isLoaded && onboardingComplete) {
       router.replace("/(auth)/register");
     }
@@ -105,7 +114,8 @@ function RootLayoutNav() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="listing/[id]" options={{ headerTitle: "" }} />
+      <Stack.Screen name="(managerTabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="listing/[id]" options={{ headerTitle: "", headerTransparent: true }} />
       <Stack.Screen
         name="(modals)/rental"
         options={{

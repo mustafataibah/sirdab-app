@@ -7,9 +7,13 @@ const Profile = () => {
   const { signOut } = useAuth();
   const router = useRouter();
 
-  const handleSignOut = () => {
-    signOut();
-    router.navigate("(auth)/login");
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.navigate("(auth)/login");
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    }
   };
 
   return (

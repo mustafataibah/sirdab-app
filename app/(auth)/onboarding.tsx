@@ -3,32 +3,32 @@ import React, { useState } from "react";
 import { Text, View, StyleSheet, SafeAreaView, Pressable } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
-// const onboardingSteps = [
-//   {
-//     icon: "Icon",
-//     title: "Title",
-//     description: "Description",
-//   },
-//   {
-//     icon: "Icon",
-//     title: "Title",
-//     description: "Description",
-//   },
-//   {
-//     icon: "Icon",
-//     title: "Title",
-//     description: "Description",
-//   },
-// ];
+const onboardingSteps = [
+  {
+    icon: "Icon",
+    title: "Title",
+    description: "Description",
+  },
+  {
+    icon: "Icon",
+    title: "Title",
+    description: "Description",
+  },
+  {
+    icon: "Icon",
+    title: "Title",
+    description: "Description",
+  },
+];
 
 export default function Onboarding() {
   const [screenIndex, setScreenIndex] = useState(0);
 
-  // const data = onboardingSteps[screenIndex];
+  const data = onboardingSteps[screenIndex];
 
   const onContinue = () => {
-    // const isLastScreen = screenIndex === onboardingSteps.length - 1;
-    const isLastScreen = screenIndex === 2;
+    const isLastScreen = screenIndex === onboardingSteps.length - 1;
+    // const isLastScreen = screenIndex === 2;
     if (isLastScreen) {
       endOnboarding();
     } else {
@@ -36,14 +36,14 @@ export default function Onboarding() {
     }
   };
 
-  // const onBack = () => {
-  //   const isFirstScreen = screenIndex === 0;
-  //   if (isFirstScreen) {
-  //     endOnboarding();
-  //   } else {
-  //     setScreenIndex(screenIndex - 1);
-  //   }
-  // };
+  const onBack = () => {
+    const isFirstScreen = screenIndex === 0;
+    if (isFirstScreen) {
+      endOnboarding();
+    } else {
+      setScreenIndex(screenIndex - 1);
+    }
+  };
 
   const endOnboarding = async () => {
     try {
@@ -58,12 +58,12 @@ export default function Onboarding() {
   return (
     <SafeAreaView style={styles.page}>
       <View style={styles.stepIndicatorContainer}>
-        {/* {onboardingSteps.map((step, index) => (
+        {onboardingSteps.map((step, index) => (
           <View
             key={index}
             style={[styles.stepIndicator, { backgroundColor: index === screenIndex ? "#CEF202" : "grey" }]}
           />
-        ))} */}
+        ))}
       </View>
 
       <View style={styles.pageContent}>

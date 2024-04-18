@@ -3,7 +3,7 @@ import { Tabs } from "expo-router";
 import Colors from "@/constants/Colors";
 import { Feather } from "@expo/vector-icons";
 
-const Layout = () => (
+const UserTabs = () => (
   <Tabs screenOptions={{ tabBarActiveTintColor: Colors.primary, tabBarLabelStyle: { fontFamily: "sf-b" } }}>
     <Tabs.Screen
       name="explore"
@@ -29,4 +29,4 @@ const Layout = () => (
   </Tabs>
 );
 
-export default Layout;
+export default UserTabs;
