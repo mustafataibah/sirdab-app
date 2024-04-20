@@ -16,27 +16,35 @@ import { useRouter } from "expo-router";
 import { useSignUp, useSignIn } from "@clerk/clerk-expo";
 
 const Register = () => {
+  // states for form fields and loading
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [managerPassword, setManagerPassword] = useState("");
   const [isManager, setIsManager] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Clerk hooks for sign up and sign in
+  // Using Clerk SDK we register the user from the backend then sign him in from the frontend
+  // This allows us to set the user's role as publicMetaData, which can be read from the frontend and read and write from the backend.
+  // For security and proper handling of user roles
   const { isLoaded, setActive } = useSignUp();
   const { signIn } = useSignIn();
 
   const router = useRouter();
 
+  // function to handle creating a user (call to server)
   const handleSignUp = async () => {
     setLoading(true);
     if (!isLoaded) return;
 
+    // if the user is a manager check if the manager password is correct (simple way but better than nothing)
     if (isManager && managerPassword !== process.env.EXPO_PUBLIC_MANAGER_PASSWORD) {
       Alert.alert("Invalid admin password");
       return;
     }
 
     try {
+      // send data to backend
       const response = await fetch("http://localhost:3000/api/register", {
         method: "POST",
         headers: {
@@ -47,6 +55,7 @@ const Register = () => {
       });
       const data = await response.json();
 
+      // handle response and proceed to sign in the user and set the session
       if (response.ok) {
         const completeSignIn = await signIn?.create({
           identifier: emailAddress,
@@ -59,6 +68,7 @@ const Register = () => {
 
         if (completeSignIn?.status === "complete") {
           await setActive({ session: completeSignIn.createdSessionId });
+          // navigate based on user role
           if (isManager) {
             router.navigate("/(managerTabs)/users");
           } else {
@@ -74,6 +84,7 @@ const Register = () => {
     setLoading(false);
   };
 
+  // hide keyboard
   const handleScreenTap = () => {
     Keyboard.dismiss();
   };

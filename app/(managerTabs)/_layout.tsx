@@ -24,7 +24,7 @@ const ManagerTabs = () => {
         name="bicycles"
         options={{
           tabBarLabel: "Bicycles",
-          tabBarIcon: ({ color, size }) => <Feather name="anchor" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Feather name="database" color={color} size={size} />,
         }}
       />
     </Tabs>

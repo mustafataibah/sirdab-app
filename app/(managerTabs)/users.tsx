@@ -1,21 +1,40 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, Button } from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, ScrollView, Button, TouchableOpacity, Text } from "react-native";
 import { useAuth } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
-import UserCard from "@/components/UserCard";
-import UserModal from "@/app/(modals)/user";
-import { User } from "@/app/types";
+import { useRouter } from "expo-router";
+import UserModal from "@/components/UserModal";
+import { Link } from "expo-router";
+import { useFocusEffect } from "expo-router";
+
+interface User {
+  emailAddress: string;
+  name: string;
+  id: string;
+}
 
 const Users = () => {
   const { signOut } = useAuth();
   const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
 
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.navigate("(auth)/login");
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUsers();
+    }, [])
+  );
 
   const fetchUsers = async () => {
     try {
@@ -27,25 +46,36 @@ const Users = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      router.navigate("(auth)/login");
-    } catch (error) {
-      console.error("Failed to sign out:", error);
-    }
+  const handlePressUser = (user: any) => {
+    setSelectedUser(user);
+    setModalVisible(true);
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchUsers();
+    setRefreshing(false);
   };
 
   return (
     <View className="flex-1 bg-gray-100">
       <Button title="Log out" onPress={handleSignOut} />
+      <Link href={"/(modals)/createUser"} asChild>
+        <Button title="Create User" />
+      </Link>
+
       <ScrollView>
+        <Button title="Refresh" onPress={handleRefresh} />
         {users.map((user) => (
-          <UserCard key={user.id} user={user} onPress={() => setSelectedUser(user)} />
+          <TouchableOpacity
+            key={user.id}
+            className="bg-white p-4 rounded-lg m-2 shadow"
+            onPress={() => handlePressUser(user)}>
+            <Text>{user.emailAddress}</Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
-
-      {selectedUser && <UserModal user={selectedUser} visible={!!selectedUser} onClose={() => setSelectedUser(null)} />}
+      {selectedUser && <UserModal user={selectedUser} visible={modalVisible} onClose={() => setModalVisible(false)} />}
     </View>
   );
 };

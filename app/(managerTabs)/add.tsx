@@ -1,82 +1,92 @@
+import { router } from "expo-router";
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { View, Text, Button, Alert } from "react-native";
+import { SelectList } from "react-native-dropdown-select-list";
+
+interface Bicycle {
+  model: string;
+  color: string;
+  location: string;
+}
 
 const AddBicycle = () => {
-  const [model, setModel] = useState("");
-  const [color, setColor] = useState("");
-  const [location, setLocation] = useState("");
-  const [rating, setRating] = useState(0);
-  const [isAvailable, setIsAvailable] = useState(true);
+  const [bicycle, setBicycle] = useState<Bicycle>({
+    model: "",
+    color: "",
+    location: "",
+  });
+
+  const models = [
+    { label: "Mountain Bike", value: "Mountain Bike" },
+    { label: "Road Bike", value: "Road Bike" },
+    { label: "Hybrid Bike", value: "Hybrid Bike" },
+    { label: "Electric Bike", value: "Electric Bike" },
+  ];
+  const colors = [
+    { label: "Red", value: "Red" },
+    { label: "Blue", value: "Blue" },
+    { label: "Green", value: "Green" },
+    { label: "Black", value: "Black" },
+  ];
+
+  const locations = [
+    { label: "Khobar", value: "Khobar" },
+    { label: "Riyadh", value: "Riyadh" },
+    { label: "Jeddah", value: "Jeddah" },
+  ];
 
   const handleAddBicycle = async () => {
+    if (!bicycle.model || !bicycle.color || !bicycle.location) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+
     try {
-      const response = await fetch("http://localhost:3000/admin/addBicycle", {
+      await fetch("http://localhost:3000/admin/addBicycle", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model, color, location, rating, isAvailable }),
+        body: JSON.stringify({
+          ...bicycle,
+          ratings: [],
+          isAvailable: true,
+        }),
       });
-      const data = await response.json();
-
-      if (data.success) {
-        Alert.alert("Success", "Bicycle added successfully!");
-        setModel("");
-        setColor("");
-      } else {
-        Alert.alert("Error", "Failed to add bicycle.");
-      }
     } catch (error) {
       console.error("Failed to add bicycle:", error);
       Alert.alert("Error", "Failed to add bicycle.");
+    } finally {
+      setBicycle({ model: "", color: "", location: "" });
+      router.navigate("/(managerTabs)/bicycles");
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>Model:</Text>
-      <TextInput style={styles.input} value={model} onChangeText={setModel} placeholder="Enter model" />
-      <Text style={styles.label}>Color:</Text>
-      <TextInput style={styles.input} value={color} onChangeText={setColor} placeholder="Enter color" />
-      <Text style={styles.label}>Location:</Text>
-      <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="Enter location" />
-      <Text style={styles.label}>Rating:</Text>
-      {/* <TextInput style={styles.input} value={rating} onChangeText={setRating} placeholder="Enter rating" /> */}
-      <Text style={styles.label}>Is Available:</Text>
-      {/* <TextInput
-        style={styles.input}
-        value={isAvailable}
-        onChangeText={setIsAvailable}
-        placeholder="Enter availability"
-      /> */}
-
-      <View style={styles.buttonContainer}>
+    <View className="flex-1 p-[20px] bg-[#f5f5f5]">
+      <Text className="text-[16px] text-black mb-[5px]">Model:</Text>
+      <SelectList
+        setSelected={(value: string) => setBicycle((bicycle) => ({ ...bicycle, model: value }))}
+        save="value"
+        data={models}
+      />
+      <Text className="text-[16px] text-black mb-[5px]">Color:</Text>
+      <SelectList
+        setSelected={(value: string) => setBicycle((bicycle) => ({ ...bicycle, color: value }))}
+        save="value"
+        data={colors}
+      />
+      <Text className="text-[16px] text-black mb-[5px]">Location:</Text>
+      <SelectList
+        setSelected={(value: string) => setBicycle((bicycle) => ({ ...bicycle, location: value }))}
+        save="value"
+        data={locations}
+      />
+      <View className="mt-[20px]">
         <Button title="Add Bicycle" onPress={handleAddBicycle} />
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#f5f5f5",
-  },
-  input: {
-    height: 40,
-    marginBottom: 12,
-    borderWidth: 1,
-    padding: 10,
-  },
-  label: {
-    fontSize: 16,
-    color: "black",
-    marginBottom: 5,
-  },
-  buttonContainer: {
-    marginTop: 20,
-  },
-});
 
 export default AddBicycle;

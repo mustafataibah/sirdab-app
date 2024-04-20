@@ -14,7 +14,9 @@ import {
 import { useRouter } from "expo-router";
 import { useSignIn, useUser } from "@clerk/clerk-react";
 
+// Basic login component
 const Login = () => {
+  // state hooks for form fields and loading
   const { isLoaded, signIn, setActive } = useSignIn();
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +24,7 @@ const Login = () => {
   const { user, isSignedIn } = useUser();
   const [loading, setLoading] = useState(false);
 
+  // effect hook to navigate to the correct screen based on user role
   useEffect(() => {
     if (isSignedIn) {
       if (user?.publicMetadata?.isManager) {
@@ -32,6 +35,7 @@ const Login = () => {
     }
   }, [isSignedIn]);
 
+  // handle log in using Clerk frotend API which creates the user and sets the session
   const handleSignIn = async () => {
     setLoading(true);
     if (!isLoaded) return;
@@ -51,6 +55,7 @@ const Login = () => {
     setLoading(false);
   };
 
+  // hides keyboard when screen is tapped
   const handleScreenTap = () => {
     Keyboard.dismiss();
   };

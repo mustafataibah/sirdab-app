@@ -1,34 +1,32 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Text, View, StyleSheet, SafeAreaView, Pressable } from "react-native";
+import { Text, View, SafeAreaView, Pressable } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import { Feather } from "@expo/vector-icons";
 
+// static onboarding steps data
 const onboardingSteps = [
   {
-    icon: "Icon",
-    title: "Title",
-    description: "Description",
+    title: "Welcome",
+    description: "Welcome to the app! Let's get started.",
   },
   {
-    icon: "Icon",
-    title: "Title",
-    description: "Description",
+    title: "Book a bicycle",
+    description: "Book a bicycle for your next adventure.",
   },
   {
-    icon: "Icon",
-    title: "Title",
-    description: "Description",
+    title: "Enjoy your ride",
+    description: "Enjoy your ride and have fun!",
   },
 ];
 
 export default function Onboarding() {
-  const [screenIndex, setScreenIndex] = useState(0);
+  const [screenIndex, setScreenIndex] = useState(0); // state to track the current onboarding screen
+  const data = onboardingSteps[screenIndex]; // data for current screen
 
-  const data = onboardingSteps[screenIndex];
-
+  // function to handle the continue button
   const onContinue = () => {
     const isLastScreen = screenIndex === onboardingSteps.length - 1;
-    // const isLastScreen = screenIndex === 2;
     if (isLastScreen) {
       endOnboarding();
     } else {
@@ -36,15 +34,7 @@ export default function Onboarding() {
     }
   };
 
-  const onBack = () => {
-    const isFirstScreen = screenIndex === 0;
-    if (isFirstScreen) {
-      endOnboarding();
-    } else {
-      setScreenIndex(screenIndex - 1);
-    }
-  };
-
+  // function to skip onboarding and navigate to the register screen
   const endOnboarding = async () => {
     try {
       await SecureStore.setItemAsync("onboardingComplete", "true");
@@ -56,25 +46,30 @@ export default function Onboarding() {
   };
 
   return (
-    <SafeAreaView style={styles.page}>
-      <View style={styles.stepIndicatorContainer}>
+    <SafeAreaView className="flex-1 justify-center bg-blue-500">
+      <View className="flex-row gap-[8px] mx-[15px]">
         {onboardingSteps.map((step, index) => (
           <View
             key={index}
-            style={[styles.stepIndicator, { backgroundColor: index === screenIndex ? "#CEF202" : "grey" }]}
+            className={`flex-1 h-[3px] rounded-[10px] ${index === screenIndex ? "bg-[#CEF202]" : "bg-[#1a1a1a]"}`}
           />
         ))}
       </View>
-
-      <View style={styles.pageContent}>
-        <View style={styles.footer}>
-          <View style={styles.buttonsRow}>
-            <Text onPress={endOnboarding} style={styles.buttonText}>
+      <View className="flex-1 justify-center items-center">
+        <Feather name={"star"} size={100} color="white" />
+        <Text className="text-[20px] font-bold text-white">{data.title}</Text>
+        <Text className="text-[16px] text-white">{data.description}</Text>
+      </View>
+      <View className="p-[20px flex-1">
+        <View className="mt-auto">
+          <View className="mt-[20px] flex flex-row items-center gap-[20px]">
+            <Text
+              onPress={endOnboarding}
+              className="text-[16px] p-[15px] px-[25px] rounded-[50px] font-bold text-white">
               Skip
             </Text>
-
-            <Pressable onPress={onContinue} style={styles.button}>
-              <Text style={styles.buttonText}>Continue</Text>
+            <Pressable onPress={onContinue} className="flex-1 items-center rounded-full bg-[#1a1a1a]">
+              <Text className="text-[16px] p-[15px] px-[25px] rounded-[50px] font-bold text-white">Continue</Text>
             </Pressable>
           </View>
         </View>
@@ -82,63 +77,3 @@ export default function Onboarding() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  page: {
-    justifyContent: "center",
-    flex: 1,
-    backgroundColor: "#15141A",
-  },
-  pageContent: {
-    padding: 20,
-    flex: 1,
-  },
-  image: {
-    alignSelf: "center",
-    margin: 20,
-    marginTop: 70,
-  },
-  title: {
-    color: "#FDFDFD",
-    fontSize: 50,
-    letterSpacing: 1.3,
-    marginVertical: 10,
-  },
-  description: {
-    color: "gray",
-    fontSize: 20,
-    lineHeight: 28,
-  },
-  footer: {
-    marginTop: "auto",
-  },
-  buttonsRow: {
-    marginTop: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 20,
-  },
-  button: {
-    backgroundColor: "#302E38",
-    borderRadius: 50,
-    alignItems: "center",
-    flex: 1,
-  },
-  buttonText: {
-    color: "#FDFDFD",
-    fontSize: 16,
-    padding: 15,
-    paddingHorizontal: 25,
-  },
-  stepIndicatorContainer: {
-    flexDirection: "row",
-    gap: 8,
-    marginHorizontal: 15,
-  },
-  stepIndicator: {
-    flex: 1,
-    height: 3,
-    backgroundColor: "gray",
-    borderRadius: 10,
-  },
-});

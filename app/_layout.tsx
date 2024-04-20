@@ -7,8 +7,12 @@ import { ClerkProvider, useUser } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
 import * as SplashScreen from "expo-splash-screen";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BicycleProvider } from "@/app/context/BicycleContext";
+import { DataProvider } from "@/app/context/DataContext";
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+// Token management for Clerk Auth using secure store
 const tokenCache = {
   async getToken(key: string) {
     try {
@@ -61,10 +65,15 @@ export default function RootLayout() {
     return null;
   }
 
+  // App global providers and navigation
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <RootLayoutNav />
+        <BicycleProvider>
+          <DataProvider>
+            <RootLayoutNav />
+          </DataProvider>
+        </BicycleProvider>
       </GestureHandlerRootView>
     </ClerkProvider>
   );
@@ -76,13 +85,13 @@ function RootLayoutNav() {
   const [loaded, setLoaded] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
-  // Primative onboarding check
+  // Check if onboaridng has been completed using secure storage to store the status
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       try {
         const onboardingStatus = await SecureStore.getItemAsync("onboardingComplete");
         if (onboardingStatus === "true") {
-          setOnboardingComplete(false);
+          setOnboardingComplete(true);
         }
       } catch (error) {
         console.error("Error retrieving onboarding status:", error);
@@ -94,7 +103,7 @@ function RootLayoutNav() {
     checkOnboardingStatus();
   }, []);
 
-  // TODO FIX THIS
+  // Handle navigation based on the user's auth and onboarding status as well as if Clerk is loaded
   useEffect(() => {
     if (loaded && isLoaded && !isSignedIn && !onboardingComplete) {
       router.replace("/(auth)/onboarding");
@@ -109,6 +118,7 @@ function RootLayoutNav() {
     }
   }, [loaded, isLoaded]);
 
+  // Navigation stack utilizing expo router and file based routing
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -117,13 +127,32 @@ function RootLayoutNav() {
       <Stack.Screen name="(managerTabs)" options={{ headerShown: false }} />
       <Stack.Screen name="listing/[id]" options={{ headerTitle: "", headerTransparent: true }} />
       <Stack.Screen
-        name="(modals)/rental"
+        name="(modals)/filter"
         options={{
           presentation: "transparentModal",
           animation: "fade",
+          title: "Search Bicycles",
+          headerTitleStyle: {
+            fontFamily: "sf-sb",
+          },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()}>
               <Feather name="chevron-left" size={24} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="(modals)/createUser"
+        options={{
+          presentation: "modal",
+          title: "Create User",
+          headerTitleStyle: {
+            fontFamily: "sf-sb",
+          },
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()}>
+              <Feather name="x" size={28} />
             </TouchableOpacity>
           ),
         }}
