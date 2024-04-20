@@ -177,7 +177,6 @@ const Listing: React.FC = () => {
 
   // book the bicycle for users
   const handleBooking = async () => {
-    console.log("booking", bicycle.id, user?.id, date);
     try {
       const response = await fetch("http://localhost:3000/api/bookBicycle", {
         method: "POST",

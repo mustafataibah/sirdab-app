@@ -26,7 +26,7 @@ const Card = ({ listings: items, onRefresh, refreshing, color }: Props) => {
     // below is the logic to filter the items based on the selected filters simply if the item does not match the filter return null
     const bookingDate = item.currentBookingDate;
 
-    const selectedDateFormatted = selectedDate ? selectedDate.replace(/\//g, "-") : null;
+    const selectedDateFormatted = selectedDate.replace(/-/g, "/");
 
     if (!user?.publicMetadata.isManager && selectedDateFormatted === bookingDate) {
       return null;
