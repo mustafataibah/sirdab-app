@@ -28,7 +28,6 @@ git clone https://github.com/mustafataibah/sirdab-app.git
 ```
 cd sirdab-app
 npm install
-
 ```
 3. Start the Application on Ios
 ```
